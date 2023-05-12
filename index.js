@@ -5,6 +5,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 8000;
 
+const password = "4yL4A9UIvRUqwk5R";
+const username = "dbuser1";
 app.use(cors());
 app.use(express.json());
 
@@ -12,8 +14,7 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
-const uri =
-  "mongodb+srv://dbuser1:NiK8.8.92@cluster0.onuh6mj.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${username}:${password}@cluster0.onuh6mj.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -36,6 +37,13 @@ async function run() {
       res.send(users);
     });
 
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.findOne(query);
+      res.send(result);
+    });
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const result = await userCollection.insertOne(user);
@@ -48,6 +56,27 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
       console.log(result);
+      res.send(result);
+    });
+
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const user = req.body;
+      console.log(user);
+      const option = { upsert: true };
+      const updatedUser = {
+        $set: {
+          name: user.name,
+          email: user.email,
+          address: user.address,
+        },
+      };
+      const result = await userCollection.updateOne(
+        filter,
+        updatedUser,
+        option
+      );
       res.send(result);
     });
   } finally {
